@@ -33,20 +33,20 @@ namespace
 	}
 }
 
-extern "C" DLLEXPORT constinit auto SKSEPlugin_Version =
-[]() {
-	SKSE::PluginVersionData v{};
 
-	v.PluginVersion(Plugin::VERSION);
-	v.PluginName(Plugin::NAME);
-	v.AuthorName("Parapets"sv);
+extern "C" DLLEXPORT bool SKSEAPI
+SKSEPlugin_Query(const SKSE::QueryInterface* a_skse, SKSE::PluginInfo* a_info)
+{
+	a_info->infoVersion = SKSE::PluginInfo::kVersion;
+	a_info->name = Plugin::NAME.data();
+	a_info->version = Plugin::VERSION[0];
 
-	v.UsesAddressLibrary(true);
-	v.HasNoStructUse(true);
-	v.UsesStructsPost629(false);
+	if (a_skse->IsEditor()) {
+		return false;
+	}
 
-	return v;
-}();
+	return true;
+}
 
 extern "C" DLLEXPORT bool SKSEAPI SKSEPlugin_Load(const SKSE::LoadInterface* a_skse)
 {
@@ -64,8 +64,6 @@ extern "C" DLLEXPORT bool SKSEAPI SKSEPlugin_Load(const SKSE::LoadInterface* a_s
 		switch (msg->type) {
 		case SKSE::MessagingInterface::kDataLoaded:
 		{
-			Translation::ParseTranslation(Plugin::NAME.data());
-
 			const auto itemTraits = Data::ItemTraits::GetSingleton();
 			const auto dataHandler = RE::TESDataHandler::GetSingleton();
 			if (dataHandler) {

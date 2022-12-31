@@ -4,12 +4,12 @@ namespace RE
 	{
 		namespace AlchemyItem
 		{
-			inline static constexpr REL::ID CreateFromEffects{ 36179 };
+			inline static constexpr REL::ID CreateFromEffects{ 35277 };
 		}
 
 		namespace BSScaleformTranslator
 		{
-			inline static constexpr REL::ID GetCachedString{ 69188 };
+			inline static constexpr REL::ID GetCachedString{ 67844 };
 		}
 
 		namespace CraftingSubMenus
@@ -18,7 +18,7 @@ namespace RE
 			{
 				namespace ModEffectivenessFunctor
 				{
-					inline static constexpr REL::ID Invoke{ 51289 };
+					inline static constexpr REL::ID Invoke{ 50373 };
 				}
 			}
 		}

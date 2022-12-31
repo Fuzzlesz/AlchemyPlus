@@ -19,7 +19,7 @@ namespace Hooks
 	{
 		static const auto hook = REL::Relocation<std::uintptr_t>(
 			RE::Offset::AlchemyItem::CreateFromEffects,
-			0x16F);
+			0x197);
 
 		if (!REL::make_pattern<"E8">().match(hook.address())) {
 			util::report_and_fail("Alchemy::CreateItemPatch failed to install"sv);
@@ -33,11 +33,11 @@ namespace Hooks
 	{
 		static const auto hook1 = REL::Relocation<std::uintptr_t>(
 			RE::Offset::CraftingSubMenus::AlchemyMenu::ModEffectivenessFunctor::Invoke,
-			0xA8);
+			0xA7);
 
 		static const auto hook2 = REL::Relocation<std::uintptr_t>(
 			RE::Offset::CraftingSubMenus::AlchemyMenu::ModEffectivenessFunctor::Invoke,
-			0x120);
+			0x127);
 
 		struct Patch1 : Xbyak::CodeGenerator
 		{
