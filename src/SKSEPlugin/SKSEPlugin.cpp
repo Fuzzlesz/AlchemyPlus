@@ -1,6 +1,5 @@
 #include "Data/ItemTraits.h"
 #include "Hooks/Alchemy.h"
-#include "Translation/Translation.h"
 
 namespace
 {
