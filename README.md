@@ -1,5 +1,7 @@
 Makes various improvements to Skyrim's Alchemy system.
 
+Port of original mod by Parapets to Skyrim version 1.5.97.
+
 ## Requirements
 * [CMake](https://cmake.org/)
 	* Add this to your `PATH`
@@ -15,8 +17,8 @@ Makes various improvements to Skyrim's Alchemy system.
 
 ## Building
 ```
-git clone https://github.com/Exit-9B/AlchemyPlus
-cd AlchemyPlus
+git clone https://github.com/Fuzzlesz/AlchemyPlus-SE
+cd AlchemyPlus-SE
 git submodule init
 git submodule update
 cmake --preset vs2022-windows
