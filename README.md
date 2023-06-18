@@ -17,8 +17,8 @@ Port of original mod by Parapets to Skyrim version 1.5.97.
 
 ## Building
 ```
-git clone https://github.com/Fuzzlesz/AlchemyPlus-SE
-cd AlchemyPlus-SE
+git clone https://github.com/Fuzzlesz/AlchemyPlus-1.5
+cd AlchemyPlus-1.5
 git submodule init
 git submodule update
 cmake --preset vs2022-windows
