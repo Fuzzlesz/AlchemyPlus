@@ -74,9 +74,7 @@ extern "C" DLLEXPORT bool SKSEAPI SKSEPlugin_Load(const SKSE::LoadInterface* a_s
 				Settings::UserSettings::GetSingleton()->LoadSettings();
 			} break;
 			}
-		} break;
-		}
-	});
+		});
 
 	return true;
 }

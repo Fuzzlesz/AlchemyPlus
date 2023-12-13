@@ -4,8 +4,7 @@ namespace RE
 	{
 		namespace AlchemyItem
 		{
-			inline static constexpr REL::ID CreateFromEffects{ 35277 };
-			inline static constexpr auto CreateFromEffects = REL::ID(36179);
+			inline static constexpr auto CreateFromEffects = REL::ID(35277);
 		}
 
 		namespace CraftingSubMenus
@@ -14,11 +13,10 @@ namespace RE
 			{
 				namespace ModEffectivenessFunctor
 				{
-					inline static constexpr REL::ID Invoke{ 50373 };
-					inline static constexpr auto Vtbl = REL::ID(215208);
+					inline static constexpr auto Vtbl = REL::ID(268522);
 				}
 
-				inline static constexpr auto SelectItem = REL::ID(51412);
+				inline static constexpr auto SelectItem = REL::ID(50526);
 			}
 		}
 	}

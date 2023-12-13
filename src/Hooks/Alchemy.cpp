@@ -18,7 +18,7 @@ namespace Hooks
 	{
 		const auto hook = REL::Relocation<std::uintptr_t>(
 			RE::Offset::CraftingSubMenus::AlchemyMenu::SelectItem,
-			0x19F);
+			0x159);
 
 		if (!REL::make_pattern<"E8">().match(hook.address())) {
 			util::report_and_fail("Alchemy::KnownFailurePatch failed to install"sv);
@@ -30,11 +30,8 @@ namespace Hooks
 
 	void Alchemy::CreateItemPatch()
 	{
-		static const auto hook = REL::Relocation<std::uintptr_t>(
-			RE::Offset::AlchemyItem::CreateFromEffects,
-			0x197);
 		const auto hook =
-			REL::Relocation<std::uintptr_t>(RE::Offset::AlchemyItem::CreateFromEffects, 0x16F);
+			REL::Relocation<std::uintptr_t>(RE::Offset::AlchemyItem::CreateFromEffects, 0x197);
 
 		if (!REL::make_pattern<"E8">().match(hook.address())) {
 			util::report_and_fail("Alchemy::CreateItemPatch failed to install"sv);
@@ -170,7 +167,7 @@ namespace Hooks
 
 			const float magnitude = roundMagnitude.Apply(a_effect->effectItem.magnitude);
 
-			a_effect->SetMagnitude(magnitude);
+			a_effect->effectItem.magnitude = (magnitude);
 		}
 
 		if (baseEffect && baseEffect->data.flags & EffectFlag::kPowerAffectsDuration) {
@@ -179,7 +176,7 @@ namespace Hooks
 			const float duration = roundDuration.Apply(
 				static_cast<float>(a_effect->effectItem.duration));
 
-			a_effect->SetDuration(static_cast<std::int32_t>(duration));
+			a_effect->effectItem.duration = (static_cast<std::int32_t>(duration));
 		}
 
 		return result;
