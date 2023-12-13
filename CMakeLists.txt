@@ -2,7 +2,7 @@ cmake_minimum_required(VERSION 3.24)
 
 project(
 	AlchemyPlus
-	VERSION 1.0.1
+	VERSION 1.1.0
 	LANGUAGES CXX
 )
 
@@ -14,7 +14,7 @@ list(APPEND CMAKE_MODULE_PATH
 )
 include(SKSEPlugin)
 
-set(SKSE_USE_XBYAK ON)
+set(SKSE_SUPPORT_VR OFF)
 
 SKSEPlugin_Add(
 	${PROJECT_NAME}
@@ -26,4 +26,12 @@ SKSEPlugin_Add(
 		vcpkg.json
 	PRECOMPILE_HEADERS
 		src/PCH/PCH.h
+)
+
+find_package(jsoncpp CONFIG REQUIRED)
+
+target_link_libraries(
+	${PROJECT_NAME}
+	PRIVATE
+		JsonCpp::JsonCpp
 )

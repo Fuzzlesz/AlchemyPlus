@@ -1,9 +1,7 @@
 #include "Alchemy.h"
 
-#include "Data/ItemTraits.h"
 #include "RE/Offset.h"
-
-#include <xbyak/xbyak.h>
+#include "Settings/UserSettings.h"
 
 #include <cmath>
 
@@ -12,7 +10,7 @@ namespace Hooks
 	void Alchemy::Install()
 	{
 		CreateItemPatch();
-		ModEffectivenessPatch();
+		RoundEffectivenessPatch();
 	}
 
 	void Alchemy::CreateItemPatch()
@@ -29,82 +27,110 @@ namespace Hooks
 		_AddForm = trampoline.write_call<5>(hook.address(), &Alchemy::ModifyAlchemyItem);
 	}
 
-	void Alchemy::ModEffectivenessPatch()
+	void Alchemy::RoundEffectivenessPatch()
 	{
-		static const auto hook1 = REL::Relocation<std::uintptr_t>(
-			RE::Offset::CraftingSubMenus::AlchemyMenu::ModEffectivenessFunctor::Invoke,
-			0xA7);
+		auto vtbl = REL::Relocation<std::uintptr_t>(
+			RE::Offset::CraftingSubMenus::AlchemyMenu::ModEffectivenessFunctor::Vtbl);
 
-		static const auto hook2 = REL::Relocation<std::uintptr_t>(
-			RE::Offset::CraftingSubMenus::AlchemyMenu::ModEffectivenessFunctor::Invoke,
-			0x127);
-
-		struct Patch1 : Xbyak::CodeGenerator
-		{
-			Patch1()
-			{
-				mov(rax, reinterpret_cast<std::uintptr_t>(&Alchemy::CalculateMagnitude));
-				call(rax);
-				mov(rdx, ptr[rbx + 0x10]);
-				movss(ptr[rsp + 0x38], xmm0);
-				jmp(ptr[rip]);
-				dq(hook1.address() + 0x6);
-			}
-		};
-
-		Patch1 patch1{};
-
-		struct Patch2 : Xbyak::CodeGenerator
-		{
-			Patch2()
-			{
-				cvtdq2ps(xmm0, xmm0);
-				mov(rax, reinterpret_cast<std::uintptr_t>(&Alchemy::CalculateDuration));
-				call(rax);
-				cvttss2si(edi, xmm0);
-				jmp(ptr[rip]);
-				dq(hook2.address() + 0x7);
-			}
-		};
-
-		Patch2 patch2{};
-
-		auto& trampoline = SKSE::GetTrampoline();
-		trampoline.write_branch<6>(hook1.address(), trampoline.allocate(patch1));
-		trampoline.write_branch<6>(hook2.address(), trampoline.allocate(patch2));
+		_ModEffectiveness = vtbl.write_vfunc(1, &Alchemy::ModEffectiveness);
 	}
 
 	void Alchemy::ModifyAlchemyItem(
 		RE::TESDataHandler* a_dataHandler,
 		RE::AlchemyItem* a_alchemyItem)
 	{
-		Data::ItemTraits::GetSingleton()->ModifyAlchemyItem(a_alchemyItem);
+		using EffectFlag = RE::EffectSetting::EffectSettingData::Flag;
+
+		const auto userSettings = Settings::UserSettings::GetSingleton();
+
+		if (userSettings->copyExemplars.enabled) {
+			if (auto exemplar = userSettings->copyExemplars.exemplars.FindClosest(a_alchemyItem)) {
+				a_alchemyItem->fullName = exemplar->name;
+				a_alchemyItem->model = exemplar->model;
+			}
+		}
+
+		bool isPoison = a_alchemyItem->IsPoison();
+		bool impure = false;
+		float cost = 0.0f;
+		for (auto& effect : a_alchemyItem->effects) {
+			bool isHostile = effect->baseEffect->data.flags.all(EffectFlag::kHostile);
+			if (isPoison == isHostile) {
+				cost += effect->cost;
+			}
+			else {
+				cost -= effect->cost;
+				impure = true;
+			}
+		}
+
+		if (cost < 0.0f) {
+			cost = 0.0f;
+		}
+
+		if (impure) {
+
+			if (userSettings->mixtureNames.enabled) {
+				std::string newName;
+
+				if (SKSE::Translation::Translate(
+						fmt::format("$AlchemyPlus_Impure{{{}}}", a_alchemyItem->GetFullName()),
+						newName)) {
+
+					a_alchemyItem->fullName = newName;
+				}
+			}
+
+			if (userSettings->impureCostFix.enabled) {
+				a_alchemyItem->data.costOverride = static_cast<std::int32_t>(cost);
+				a_alchemyItem->data.flags.set(RE::AlchemyItem::AlchemyFlag::kCostOverride);
+			}
+		}
+		else if (a_alchemyItem->effects.size() > 1) {
+
+			if (userSettings->mixtureNames.enabled) {
+				std::string newName;
+
+				if (SKSE::Translation::Translate(
+						fmt::format(
+							"$AlchemyPlus_Mixed{{{}}}{{{}}}",
+							a_alchemyItem->GetFullName(),
+							a_alchemyItem->effects.size() - 1),
+						newName)) {
+
+					a_alchemyItem->fullName = newName;
+				}
+			}
+		}
+
 		return _AddForm(a_dataHandler, a_alchemyItem);
 	}
 
-	float Alchemy::CalculateMagnitude(float a_magnitude)
+	std::int32_t Alchemy::ModEffectiveness(void* a_functor, RE::Effect* a_effect)
 	{
-		constexpr float roundThreshold = 25.0f;
-		constexpr float roundMult = 5.0f;
+		using EffectFlag = RE::EffectSetting::EffectSettingData::Flag;
 
-		float result = a_magnitude;
-		if (a_magnitude > roundThreshold) {
-			result += roundMult * 0.5f;
-			result -= std::remainderf(result, roundMult);
+		auto result = _ModEffectiveness(a_functor, a_effect);
+
+		const auto userSettings = Settings::UserSettings::GetSingleton();
+		const auto baseEffect = a_effect->baseEffect;
+
+		if (baseEffect && baseEffect->data.flags & EffectFlag::kPowerAffectsMagnitude) {
+			const auto roundMagnitude = userSettings->roundedPotency.GetMagnitudeSetting(
+				baseEffect);
+
+			const float magnitude = roundMagnitude.Apply(a_effect->effectItem.magnitude);
+
+			a_effect->SetMagnitude(magnitude);
 		}
 
-		return result;
-	}
+		if (baseEffect && baseEffect->data.flags & EffectFlag::kPowerAffectsDuration) {
+			const auto roundDuration = userSettings->roundedPotency.GetDurationSetting(baseEffect);
 
-	float Alchemy::CalculateDuration(float a_duration)
-	{
-		constexpr float roundThreshold = 15.0f;
-		constexpr float roundMult = 5.0f;
+			const float duration = roundDuration.Apply(
+				static_cast<float>(a_effect->effectItem.duration));
 
-		float result = a_duration;
-		if (a_duration > roundThreshold) {
-			result += roundMult * 0.5f;
-			result -= std::remainderf(result, roundMult);
+			a_effect->SetDuration(static_cast<std::int32_t>(duration));
 		}
 
 		return result;
